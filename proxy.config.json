@@ -1,0 +1,6 @@
+{
+    "/api": {
+        "target": "https://demo.interfacema.de",
+        "secure": false
+    }
+}
