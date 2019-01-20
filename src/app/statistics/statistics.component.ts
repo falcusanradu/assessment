@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { House } from '../model/interfaces';
-import { BackendServiceService } from './backend-service.service';
+import { BackendServiceService } from '../backend-service.service';
 
 enum SortType {
   DISTANCE,

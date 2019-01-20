@@ -8,14 +8,8 @@ import { HttpClient } from '@angular/common/http';
 })
 export class BackendServiceService {
 
-  // TODO rfa: set headers
-  // headers = new Headers({'Content-Type': 'application/json'});
-  // options = new RequestOptions({headers: this.headers});
-  // https://demo.interfacema.de
   URL = '/api/programming-assessment-1.0/buildings';
-  // options = new RequestOptions({ headers: this.headers });
-
-
+  
   constructor(private httpClient: HttpClient) {
 
   }

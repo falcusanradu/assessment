@@ -3,8 +3,8 @@ import { NgModule } from '@angular/core';
 
 import { AppComponent } from './app.component';
 import { StatisticsComponent } from './statistics/statistics.component';
-import { BackendServiceService } from './statistics/backend-service.service';
 import { HttpClientModule } from '@angular/common/http';
+import { BackendServiceService } from './backend-service.service';
 
 @NgModule({
   declarations: [
