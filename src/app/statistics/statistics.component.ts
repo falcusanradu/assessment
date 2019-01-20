@@ -8,6 +8,8 @@ enum SortType {
   NO_DATA
 }
 
+const ZERO_ZONE = 'Eberswalder Straße 55';
+
 @Component({
   selector: 'app-statistics',
   templateUrl: './statistics.component.html',
@@ -25,23 +27,25 @@ export class StatisticsComponent implements OnInit {
   ngOnInit() {
     this.backendService.getData().subscribe((data) => {
       this.houses = data.houses;
-      this.setDistanceForAllHouses();
-      this.nearestHouses = this.sortHousesByShortestDistance(this.houses, SortType.DISTANCE);
-      console.log(' this.nearestHouses', this.nearestHouses);
-      this.setSortedHousesWithMoreThan5Rooms();
-      this.filterHousesByOwningProperties();
-      console.log(this.housesWithAllProperties);
+      this.setDistanceForAllHouses(ZERO_ZONE);
+      this.nearestHouses = this.sortHousesBySortCriteria(this.houses, SortType.DISTANCE).slice(1);
+      // console.log(' this.nearestHouses', this.nearestHouses);
+      this.housesWithMoreThan5Rooms = this.getSortedHousesByNumberOfRooms(this.houses, 5);
+      // console.log('  this.housesWithMoreThan5Rooms: ', this.housesWithMoreThan5Rooms);
+      this.housesWithAllProperties = this.filterHousesByOwningProperties(this.houses);
+      // console.log('housesWithAllProperties', this.housesWithAllProperties);
+      this.calculateIdealHouse();
     });
   }
 
-  filterHousesByOwningProperties(): void {
-    this.houses.forEach((house) => {
+  private filterHousesByOwningProperties(houses: House[]): House[] {
+    houses.forEach((house) => {
       const stringifiedValue = JSON.stringify(house);
       if (this.stringHasAllProperites(stringifiedValue)) {
         this.housesWithAllProperties.push(house);
       }
     });
-    this.housesWithAllProperties = this.sortHousesByShortestDistance(this.housesWithAllProperties, SortType.NO_DATA);
+    return this.sortHousesBySortCriteria(this.housesWithAllProperties, SortType.NO_DATA);
   }
 
   private stringHasAllProperites(stringifiedValue: string) {
@@ -55,11 +59,10 @@ export class StatisticsComponent implements OnInit {
     return false;
   }
 
-  sortHousesByShortestDistance(houses: House[], sortType: SortType) {
-    houses.sort((house1, house2) => {
+  private sortHousesBySortCriteria(houses: House[], sortType: SortType) {
+    return houses.sort((house1, house2) => {
       return this.getSortCriteria(sortType, house1, house2) ? -1 : 1;
     });
-    return houses;
   }
 
 
@@ -76,11 +79,13 @@ export class StatisticsComponent implements OnInit {
   }
 
   // calculates distance between Eberswalder Straße 55 and the other houses
-  private setDistanceForAllHouses() {
-    const punctZero: House = this.getHouseAtAddress(this.houses, 'Eberswalder Straße 55');
+  private setDistanceForAllHouses(street: string) {
+    const punctZero: House = this.getHouseAtAddress(this.houses, street);
     this.houses.forEach((house) => {
-      house.distanceTo = this.calculateDistance(house.coords.lat, house.coords.lon, punctZero.coords.lat,
-        punctZero.coords.lon);
+      if (house.coords && house.coords.lat && house.coords.lon) {
+        house.distanceTo = this.calculateDistance(house.coords.lat, house.coords.lon, punctZero.coords.lat,
+          punctZero.coords.lon);
+      }
     });
   }
 
@@ -100,18 +105,33 @@ export class StatisticsComponent implements OnInit {
   }
 
 
-  setSortedHousesWithMoreThan5Rooms(): void {
-    this.housesWithMoreThan5Rooms = this.sortHousesByShortestDistance(this.getHousesWithMoreThan5Rooms(), SortType.MAX_ROOMS);
-    console.log('  this.housesWithMoreThan5Rooms: ', this.housesWithMoreThan5Rooms);
+  private getSortedHousesByNumberOfRooms(houses: House[], numberOfRooms: number): House[] {
+    return this.sortHousesBySortCriteria(this.getHousesWithMoreThan5Rooms(houses, numberOfRooms), SortType.MAX_ROOMS);
   }
-  private getHousesWithMoreThan5Rooms(): House[] {
-    const sad = this.houses.filter((house) => {
+  private getHousesWithMoreThan5Rooms(houses: House[], numberOfRooms: number): House[] {
+    return houses.filter((house) => {
       if (!house.params || !house.params.rooms) {
         return false;
       }
-      return house.params.rooms > 5;
+      return house.params.rooms > numberOfRooms;
     });
-    return sad;
+  }
+
+
+  private getHousesCheaperOrEqalThanValue(houses: House[], value: number): House[] {
+    return houses.filter((house) => {
+      return house.params.value <= value;
+    });
+  }
+
+  private calculateIdealHouse(): House {
+    let canditates = this.filterHousesByOwningProperties(this.houses);
+    canditates = this.getSortedHousesByNumberOfRooms(canditates, 10);
+    canditates = this.sortHousesBySortCriteria(this.getHousesCheaperOrEqalThanValue(canditates, 5000000), SortType.DISTANCE);
+    console.log('all: ', this.houses);
+    console.log('canditates: ', canditates);
+    console.log('result: ', canditates[0]);
+    return canditates[0];
   }
 
 
